@@ -33,14 +33,20 @@
   </section>
 </template>
 
-<script lang="ts">
+<script>
 import { onMounted, reactive } from 'vue'
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue } from "firebase/database";
 import { getAuth, signInWithPopup ,GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
-  
+  apiKey: import.meta.env.VITE_API_KEY,
+  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_DATABASE_URL,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_APP_ID
 }
 
 const app = initializeApp(firebaseConfig)
@@ -64,18 +70,26 @@ export default {
       signInWithPopup(auth, provider)
         .then((result) => {
           const credential = GoogleAuthProvider.credentialFromResult(result)
-          console.log(credential)
           const token = credential.accessToken
           const user = result.user
           data.user = user
           data.message = 'ログインしました。'
+          console.log(data.message);
           const getdb = ref(db, '/board')
+            .orderByKey()
+            .limitToLast(data.num_per_page)
+            .once('value', (snapshot) => {
+              console.log(snapshot);
+            })
           onValue(getdb, (snapshot) => {
             const persons = snapshot.val()
             console.log(persons)
           })
         })
     }
+    onMounted(() => {
+      login()
+    })
     return {
       data, login,
     }
